@@ -28,9 +28,9 @@ A fast, conflict-free collaborative document editor. Multiple users can edit the
 - [x] Project skeleton + GitHub
 - [x] Landing page + shadcn/ui
 - [x] Supabase auth setup
-- [ ] Sign-up / sign-in flow
-- [ ] Documents dashboard
-- [ ] Deploy to Vercel
+- [x] Sign-up / sign-in flow
+- [x] Documents dashboard
+- [x] Deploy to Vercel
 - [ ] Tiptap rich text editor (solo)
 
 **Month 2 — Collaboration**
