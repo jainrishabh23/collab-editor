@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import Editor from "@/components/editor";
+import type { JSONContent } from "@tiptap/react";
 
 export default async function DocumentPage({
   params,
@@ -27,7 +28,9 @@ export default async function DocumentPage({
   if (error) {
     return (
       <main className="min-h-screen flex items-center justify-center p-8">
-        <p className="text-destructive">Error loading document: {error.message}</p>
+        <p className="text-destructive">
+          Error loading document: {error.message}
+        </p>
       </main>
     );
   }
@@ -36,10 +39,11 @@ export default async function DocumentPage({
     notFound();
   }
 
-  // Tiptap accepts HTML strings or its own JSON format. We stored content
-  // as JSONB; for now we treat it as an HTML string. We'll formalize this on Day 9.
+  // content is JSONB. It can be null (new document) or a Tiptap JSON object.
   const initialContent =
-    typeof document.content === "string" ? document.content : null;
+    document.content && typeof document.content === "object"
+      ? (document.content as JSONContent)
+      : null;
 
   return (
     <main className="min-h-screen bg-background">
@@ -56,11 +60,75 @@ export default async function DocumentPage({
       </nav>
 
       <section className="max-w-3xl mx-auto px-6 py-10">
-        <Editor initialContent={initialContent} />
+        <Editor documentId={document.id} initialContent={initialContent} />
       </section>
     </main>
   );
 }
+
+// import { notFound, redirect } from "next/navigation";
+// import Link from "next/link";
+// import { createClient } from "@/lib/supabase/server";
+// import { Button } from "@/components/ui/button";
+// import Editor from "@/components/editor";
+
+// export default async function DocumentPage({
+//   params,
+// }: {
+//   params: Promise<{ id: string }>;
+// }) {
+//   const { id } = await params;
+
+//   const supabase = await createClient();
+//   const { data: userData, error: userError } = await supabase.auth.getUser();
+
+//   if (userError || !userData?.user) {
+//     redirect("/sign-in");
+//   }
+
+//   const { data: document, error } = await supabase
+//     .from("documents")
+//     .select("id, title, content, updated_at")
+//     .eq("id", id)
+//     .maybeSingle();
+
+//   if (error) {
+//     return (
+//       <main className="min-h-screen flex items-center justify-center p-8">
+//         <p className="text-destructive">Error loading document: {error.message}</p>
+//       </main>
+//     );
+//   }
+
+//   if (!document) {
+//     notFound();
+//   }
+
+//   // Tiptap accepts HTML strings or its own JSON format. We stored content
+//   // as JSONB; for now we treat it as an HTML string. We'll formalize this on Day 9.
+//   const initialContent =
+//     typeof document.content === "string" ? document.content : null;
+
+//   return (
+//     <main className="min-h-screen bg-background">
+//       <nav className="flex items-center justify-between px-6 py-4 border-b">
+//         <div className="flex items-center gap-4 min-w-0">
+//           <Button variant="ghost" size="sm" asChild>
+//             <Link href="/dashboard">← Back</Link>
+//           </Button>
+//           <span className="font-medium truncate">{document.title}</span>
+//         </div>
+//         <span className="text-xs text-muted-foreground hidden sm:inline">
+//           ID: {document.id.slice(0, 8)}…
+//         </span>
+//       </nav>
+
+//       <section className="max-w-3xl mx-auto px-6 py-10">
+//         <Editor initialContent={initialContent} />
+//       </section>
+//     </main>
+//   );
+// }
 
 // import { notFound, redirect } from "next/navigation";
 // import Link from "next/link";
