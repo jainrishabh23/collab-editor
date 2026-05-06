@@ -1,0 +1,72 @@
+import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { Button } from "@/components/ui/button";
+
+export default async function DocumentPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+
+  const supabase = await createClient();
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+
+  if (userError || !userData?.user) {
+    redirect("/sign-in");
+  }
+
+  const { data: document, error } = await supabase
+    .from("documents")
+    .select("id, title, content, updated_at")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-8">
+        <p className="text-destructive">Error loading document: {error.message}</p>
+      </main>
+    );
+  }
+
+  if (!document) {
+    notFound();
+  }
+
+  return (
+    <main className="min-h-screen bg-background">
+      <nav className="flex items-center justify-between px-6 py-4 border-b">
+        <div className="flex items-center gap-4 min-w-0">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/dashboard">← Back</Link>
+          </Button>
+          <span className="font-medium truncate">{document.title}</span>
+        </div>
+        <span className="text-xs text-muted-foreground hidden sm:inline">
+          ID: {document.id.slice(0, 8)}…
+        </span>
+      </nav>
+
+      <section className="max-w-3xl mx-auto px-6 py-16">
+        <div className="rounded-lg border border-dashed p-12 text-center">
+          <h2 className="font-medium mb-1">Editor coming on Day 8</h2>
+          <p className="text-sm text-muted-foreground">
+            This is a placeholder. The Tiptap editor lands in Week 2.
+          </p>
+        </div>
+
+        <div className="mt-8 text-xs text-muted-foreground">
+          <p>
+            <span className="font-medium">Document ID:</span> {document.id}
+          </p>
+          <p className="mt-1">
+            <span className="font-medium">Last updated:</span>{" "}
+            {new Date(document.updated_at).toLocaleString()}
+          </p>
+        </div>
+      </section>
+    </main>
+  );
+}
