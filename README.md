@@ -63,10 +63,12 @@ pnpm dev
 
 Visit http://localhost:3000.
 
+**🚀 Live demo:** [https://collab-editor-silk.vercel.app/]
+
 You'll need a Supabase project. Copy `.env.example` to `.env.local` and fill in:
 
 ```
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url 
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
 ```
 
