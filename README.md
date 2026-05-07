@@ -31,7 +31,10 @@ A fast, conflict-free collaborative document editor. Multiple users can edit the
 - [x] Sign-up / sign-in flow
 - [x] Documents dashboard
 - [x] Deploy to Vercel
-- [ ] Tiptap rich text editor (solo)
+- [x] Tiptap rich text editor (solo)
+- [x] Inline title editing + delete + rename
+- [x] Auto-save with retries + offline awareness
+- [x] Notion-style slash command menu
 
 **Month 2 — Collaboration**
 - [ ] Yjs integration
@@ -66,6 +69,17 @@ pnpm dev
 Visit http://localhost:3000.
 
 **🚀 Live demo:** [https://collab-editor-silk.vercel.app/]
+
+## Screenshots
+
+### Dashboard
+![Dashboard](./docs/screenshots/dashboard.png)
+
+### Editor with rich text
+![Editor](./docs/screenshots/editor.png)
+
+### Slash command menu
+![Slash menu](./docs/screenshots/slash-menu.png)
 
 You'll need a Supabase project. Copy `.env.example` to `.env.local` and fill in:
 
