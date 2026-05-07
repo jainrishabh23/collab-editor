@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import Editor from "@/components/editor";
 import type { JSONContent } from "@tiptap/react";
+import DocumentTitle from "@/components/document-title";
 
 export default async function DocumentPage({
   params,
@@ -48,12 +49,15 @@ export default async function DocumentPage({
   return (
     <main className="min-h-screen bg-background">
       <nav className="flex items-center justify-between px-6 py-4 border-b">
+
         <div className="flex items-center gap-4 min-w-0">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/dashboard">← Back</Link>
           </Button>
-          <span className="font-medium truncate">{document.title}</span>
+          <DocumentTitle documentId={document.id} initialTitle={document.title} />
+          {/* <span className="font-medium truncate">{document.title}</span> */}
         </div>
+
         <span className="text-xs text-muted-foreground hidden sm:inline">
           ID: {document.id.slice(0, 8)}…
         </span>

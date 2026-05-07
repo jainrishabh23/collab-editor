@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import SignOutButton from "./sign-out-button";
 import NewDocumentButton from "./new-document-button";
+import DocumentActions from "./document-actions";
 
 type Document = {
   id: string;
@@ -65,23 +66,48 @@ export default async function DashboardPage() {
   );
 }
 
+// function DocumentList({ documents }: { documents: Document[] }) {
+//   return (
+//     <ul className="flex flex-col gap-2">
+//       {documents.map((doc) => (
+//         <li key={doc.id}>
+//           <Link
+//             href={`/doc/${doc.id}`}
+//             className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors"
+//           >
+//             <div className="min-w-0 flex-1">
+//               <p className="font-medium truncate">{doc.title}</p>
+//               <p className="text-xs text-muted-foreground mt-0.5">
+//                 Updated {formatDistanceToNow(new Date(doc.updated_at), { addSuffix: true })}
+//               </p>
+//             </div>
+//             <span className="text-muted-foreground text-sm ml-4 shrink-0">→</span>
+//           </Link>
+//         </li>
+//       ))}
+//     </ul>
+//   );
+// }
+
 function DocumentList({ documents }: { documents: Document[] }) {
   return (
     <ul className="flex flex-col gap-2">
       {documents.map((doc) => (
-        <li key={doc.id}>
+        <li key={doc.id} className="relative">
           <Link
             href={`/doc/${doc.id}`}
             className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors"
           >
-            <div className="min-w-0 flex-1">
+            <div className="min-w-0 flex-1 pr-12">
               <p className="font-medium truncate">{doc.title}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Updated {formatDistanceToNow(new Date(doc.updated_at), { addSuffix: true })}
               </p>
             </div>
-            <span className="text-muted-foreground text-sm ml-4 shrink-0">→</span>
           </Link>
+          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+            <DocumentActions documentId={doc.id} currentTitle={doc.title} />
+          </div>
         </li>
       ))}
     </ul>
