@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
 import Editor from "@/components/editor";
+import CollabEditor from "@/components/collab-editor";
 import type { JSONContent } from "@tiptap/react";
 import DocumentTitle from "@/components/document-title";
 
@@ -64,7 +65,8 @@ export default async function DocumentPage({
       </nav>
 
       <section className="max-w-3xl mx-auto px-6 py-10">
-        <Editor documentId={document.id} initialContent={initialContent} />
+        <CollabEditor documentId={document.id} />
+        {/* <Editor documentId={document.id} initialContent={initialContent} /> */}
       </section>
     </main>
   );
