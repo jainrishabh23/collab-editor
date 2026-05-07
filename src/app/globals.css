@@ -2,6 +2,7 @@
 @plugin "@tailwindcss/typography";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "tippy.js/dist/tippy.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -128,4 +129,9 @@
   html {
     @apply font-sans;
   }
+}
+
+.tippy-box[data-theme~="light-border"] {
+  background-color: transparent;
+  border: 0;
 }

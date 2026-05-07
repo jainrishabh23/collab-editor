@@ -10,6 +10,11 @@ import EditorToolbar from "./editor-toolbar";
 import RelativeTime from "./relative-time";
 import { useOnline } from "@/lib/hooks/use-online";
 import { useDocumentSave, type SaveStatus } from "@/lib/hooks/use-document-save";
+import {
+  SlashCommandsExtension,
+  makeSuggestionConfig,
+} from "@/lib/editor/slash-command-extension";
+import { slashCommands } from "@/lib/editor/slash-commands";
 
 type EditorProps = {
   documentId: string;
@@ -39,6 +44,9 @@ export default function Editor({ documentId, initialContent }: EditorProps) {
           class: "text-primary underline underline-offset-4 cursor-pointer",
         },
       }),
+     SlashCommandsExtension.configure({
+    suggestion: makeSuggestionConfig(slashCommands),
+  }),
     ],
     content: initialContent ?? "",
     editorProps: {
