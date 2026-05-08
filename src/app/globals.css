@@ -135,3 +135,40 @@
   background-color: transparent;
   border: 0;
 }
+
+
+
+/* Tiptap CollaborationCaret styles
+   Renders the cursor of remote users plus a small label with their name. */
+
+.collaboration-caret__caret {
+  position: relative;
+  margin-left: -1px;
+  margin-right: -1px;
+  border-left: 1px solid #0d0d0d;
+  border-right: 1px solid #0d0d0d;
+  word-break: normal;
+  pointer-events: none;
+}
+
+.collaboration-caret__label {
+  position: absolute;
+  top: -1.4em;
+  left: -1px;
+  border-radius: 3px 3px 3px 0;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 1;
+  user-select: none;
+  color: white;
+  padding: 2px 4px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.collaboration-caret__selection {
+  /* Selection highlights for remote users. Slightly transparent so multiple
+     selections can overlap without going opaque. */
+  background-color: var(--collab-caret-color, rgba(59, 130, 246, 0.25));
+}

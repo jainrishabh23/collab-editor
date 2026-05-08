@@ -50,12 +50,14 @@ export default async function DocumentPage({
   return (
     <main className="min-h-screen bg-background">
       <nav className="flex items-center justify-between px-6 py-4 border-b">
-
         <div className="flex items-center gap-4 min-w-0">
           <Button variant="ghost" size="sm" asChild>
             <Link href="/dashboard">← Back</Link>
           </Button>
-          <DocumentTitle documentId={document.id} initialTitle={document.title} />
+          <DocumentTitle
+            documentId={document.id}
+            initialTitle={document.title}
+          />
           {/* <span className="font-medium truncate">{document.title}</span> */}
         </div>
 
@@ -65,7 +67,13 @@ export default async function DocumentPage({
       </nav>
 
       <section className="max-w-3xl mx-auto px-6 py-10">
-        <CollabEditor documentId={document.id} />
+        <CollabEditor
+          documentId={document.id}
+          user={{
+            id: userData.user.id,
+            email: userData.user.email ?? "",
+          }}
+        />
         {/* <Editor documentId={document.id} initialContent={initialContent} /> */}
       </section>
     </main>
