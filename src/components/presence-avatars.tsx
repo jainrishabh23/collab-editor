@@ -5,13 +5,22 @@ import { useEffect, useState } from "react";
 import { WebsocketProvider } from "y-websocket";
 
 type AwarenessUser = {
-  id: string;
+  // Optional: CollaborationCaret overwrites the awareness `user` field with its
+  // own { name, color } payload on init, dropping any id we set earlier.
+  id?: string;
   name: string;
   color: string;
 };
 
 type AwarenessState = {
   user?: AwarenessUser;
+};
+
+type DisplayUser = {
+  key: string;
+  name: string;
+  color: string;
+  isYou: boolean;
 };
 
 type Props = {
@@ -21,39 +30,39 @@ type Props = {
 };
 
 export default function PresenceAvatars({ provider, localUserId }: Props) {
-  const [users, setUsers] = useState<AwarenessUser[]>([]);
+  const [users, setUsers] = useState<DisplayUser[]>([]);
 
   useEffect(() => {
     const awareness = provider.awareness;
-
-    // function update() {
-    //   const states = Array.from(awareness.getStates().values()) as AwarenessState[];
-
-    //   // Deduplicate by user id (a user might have multiple tabs open with the same id).
-    //   const seen = new Set<string>();
-    //   const unique: AwarenessUser[] = [];
-    //   for (const state of states) {
-    //     if (!state.user) continue;
-    //     if (seen.has(state.user.id)) continue;
-    //     seen.add(state.user.id);
-    //     unique.push(state.user);
-    //   }
-
-    //   setUsers(unique);
-    // }
+    const localClientID = awareness.clientID;
 
     function update() {
-    const states = Array.from(awareness.getStates().values()) as AwarenessState[];
+      const entries = Array.from(awareness.getStates().entries()) as [
+        number,
+        AwarenessState,
+      ][];
 
-    const map = new Map<string, AwarenessUser>();
-    for (const state of states) {
+      // Dedupe by user.id when present, else by clientID. Each Yjs peer has
+      // a unique clientID, so falling back to it shows one avatar per tab when
+      // the id has been stripped by another awareness writer.
+      const map = new Map<string, DisplayUser>();
+      for (const [clientID, state] of entries) {
         if (!state.user) continue;
-        if (typeof state.user.id !== "string") continue;
-        // Last writer wins on duplicate ids — fine for our use.
-        map.set(state.user.id, state.user);
-    }
+        const id =
+          typeof state.user.id === "string" ? state.user.id : null;
+        const key = id ?? `client-${clientID}`;
+        if (map.has(key)) continue;
+        map.set(key, {
+          key,
+          name: state.user.name,
+          color: state.user.color,
+          isYou:
+            clientID === localClientID ||
+            (id !== null && id === localUserId),
+        });
+      }
 
-    setUsers(Array.from(map.values()));
+      setUsers(Array.from(map.values()));
     }
 
     update();
@@ -61,7 +70,7 @@ export default function PresenceAvatars({ provider, localUserId }: Props) {
     return () => {
       awareness.off("change", update);
     };
-  }, [provider]);
+  }, [provider, localUserId]);
 
   if (users.length === 0) return null;
 
@@ -73,10 +82,10 @@ export default function PresenceAvatars({ provider, localUserId }: Props) {
     <div className="flex items-center -space-x-2">
       {visible.map((user) => (
         <Avatar
-          key={user.id}
+          key={user.key}
           name={user.name}
           color={user.color}
-          isYou={user.id === localUserId}
+          isYou={user.isYou}
         />
       ))}
       {overflow > 0 && (
