@@ -37,10 +37,12 @@ A fast, conflict-free collaborative document editor. Multiple users can edit the
 - [x] Notion-style slash command menu
 
 **Month 2 — Collaboration**
-- [ ] Yjs integration
-- [ ] Real-time sync between tabs
-- [ ] Live cursors and presence
-- [ ] Custom WebSocket server on Fly.io
+- [x] Yjs integration
+- [x] Real-time sync between tabs
+- [x] Live cursors and presence
+- [x] Custom WebSocket server
+- [x] Server-side persistence to Postgres
+- [ ] Production deploy to Fly.io
 
 **Month 3 — Production**
 - [ ] Persistence of CRDT state

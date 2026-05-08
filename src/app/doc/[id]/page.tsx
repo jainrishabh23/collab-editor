@@ -6,6 +6,7 @@ import Editor from "@/components/editor";
 import CollabEditor from "@/components/collab-editor";
 import type { JSONContent } from "@tiptap/react";
 import DocumentTitle from "@/components/document-title";
+import ShareButton from "./share-button";
 
 export default async function DocumentPage({
   params,
@@ -23,7 +24,7 @@ export default async function DocumentPage({
 
   const { data: document, error } = await supabase
     .from("documents")
-    .select("id, title, content, updated_at")
+    .select("id, title, content, updated_at, owner_id")
     .eq("id", id)
     .maybeSingle();
 
@@ -47,6 +48,18 @@ export default async function DocumentPage({
       ? (document.content as JSONContent)
       : null;
 
+  const isOwner = document.owner_id === userData.user.id;
+
+  // Viewers get a read-only editor; editors and owners get full edit.
+  const { data: perm } = await supabase
+    .from("document_permissions")
+    .select("role")
+    .eq("document_id", document.id)
+    .eq("user_id", userData.user.id)
+    .maybeSingle();
+
+  const canEdit = isOwner || perm?.role === "editor";
+
   return (
     <main className="min-h-screen bg-background">
       <nav className="flex items-center justify-between px-6 py-4 border-b">
@@ -61,9 +74,12 @@ export default async function DocumentPage({
           {/* <span className="font-medium truncate">{document.title}</span> */}
         </div>
 
-        <span className="text-xs text-muted-foreground hidden sm:inline">
-          ID: {document.id.slice(0, 8)}…
-        </span>
+        <div className="flex items-center gap-3">
+          {isOwner && <ShareButton documentId={document.id} />}
+          <span className="text-xs text-muted-foreground hidden sm:inline">
+            ID: {document.id.slice(0, 8)}…
+          </span>
+        </div>
       </nav>
 
       <section className="max-w-3xl mx-auto px-6 py-10">
@@ -73,6 +89,7 @@ export default async function DocumentPage({
             id: userData.user.id,
             email: userData.user.email ?? "",
           }}
+          canEdit={canEdit}
         />
         {/* <Editor documentId={document.id} initialContent={initialContent} /> */}
       </section>

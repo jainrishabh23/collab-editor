@@ -1,0 +1,11 @@
+.next
+.git
+.env*
+node_modules
+src
+public
+docs
+scripts
+*.md
+*.log
+.history

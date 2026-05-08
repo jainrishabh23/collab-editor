@@ -25,11 +25,16 @@ type CurrentUser = {
 type Props = {
   documentId: string;
   user: CurrentUser;
+  canEdit?: boolean;
 };
 
 type ConnectionStatus = "connecting" | "connected" | "disconnected";
 
-export default function CollabEditor({ documentId, user }: Props) {
+export default function CollabEditor({
+  documentId,
+  user,
+  canEdit = true,
+}: Props) {
   const [ydoc] = useState(() => new Y.Doc());
   const [provider, setProvider] = useState<WebsocketProvider | null>(null);
   const [status, setStatus] = useState<ConnectionStatus>("connecting");
@@ -77,6 +82,7 @@ export default function CollabEditor({ documentId, user }: Props) {
       provider={provider}
       status={status}
       localUser={localUser}
+      canEdit={canEdit}
     />
   );
 }
@@ -86,14 +92,20 @@ function InnerCollabEditor({
   provider,
   status,
   localUser,
+  canEdit,
 }: {
   ydoc: Y.Doc;
   provider: WebsocketProvider;
   status: ConnectionStatus;
   localUser: { id: string; name: string; color: string };
+  canEdit: boolean;
 }) {
+  // Extensions are evaluated once at editor creation. canEdit comes from a
+  // server fetch and won't change mid-session, so the conditional include
+  // below is safe.
   const editor = useEditor({
     immediatelyRender: false,
+    editable: canEdit,
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
@@ -107,13 +119,17 @@ function InnerCollabEditor({
       }),
       Placeholder.configure({ placeholder: "Start writing..." }),
       Collaboration.configure({ document: ydoc }),
-      CollaborationCaret.configure({
-        provider,
-        user: {
-          name: localUser.name,
-          color: localUser.color,
-        },
-      }),
+      ...(canEdit
+        ? [
+            CollaborationCaret.configure({
+              provider,
+              user: {
+                name: localUser.name,
+                color: localUser.color,
+              },
+            }),
+          ]
+        : []),
       SlashCommandsExtension.configure({
         suggestion: makeSuggestionConfig(slashCommands),
       }),
@@ -137,14 +153,26 @@ function InnerCollabEditor({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
-        <EditorToolbar editor={editor} />
+        {canEdit ? <EditorToolbar editor={editor} /> : <div />}
         <div className="flex items-center gap-3 shrink-0">
           <PresenceAvatars provider={provider} localUserId={localUser.id} />
           <ConnectionIndicator status={status} />
+          {!canEdit && <ViewerBadge />}
         </div>
       </div>
       <EditorContent editor={editor} />
     </div>
+  );
+}
+
+function ViewerBadge() {
+  return (
+    <span
+      className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-muted text-muted-foreground"
+      title="You have read-only access to this document"
+    >
+      Viewer
+    </span>
   );
 }
 

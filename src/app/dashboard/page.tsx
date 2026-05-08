@@ -6,10 +6,18 @@ import SignOutButton from "./sign-out-button";
 import NewDocumentButton from "./new-document-button";
 import DocumentActions from "./document-actions";
 
+type Role = "viewer" | "editor";
+
 type Document = {
   id: string;
   title: string;
   updated_at: string;
+  owner_id: string;
+};
+
+type DocumentWithMeta = Document & {
+  isOwner: boolean;
+  role: Role | null;
 };
 
 export default async function DashboardPage() {
@@ -22,8 +30,41 @@ export default async function DashboardPage() {
 
   const { data: documents, error: docsError } = await supabase
     .from("documents")
-    .select("id, title, updated_at")
+    .select("id, title, updated_at, owner_id")
     .order("updated_at", { ascending: false });
+
+  // Pull only the current user's permission rows so we can label shared docs
+  // with their role. RLS already restricts to user_id = self, but the explicit
+  // filter keeps intent obvious and the index hot.
+  const { data: permissions, error: permsError } = await supabase
+    .from("document_permissions")
+    .select("document_id, role")
+    .eq("user_id", userData.user.id);
+
+  if (permsError) {
+    console.error("Failed to load permissions:", permsError.message);
+  }
+
+  const roleByDocId = new Map<string, Role>();
+  for (const p of permissions ?? []) {
+    roleByDocId.set(p.document_id, p.role as Role);
+  }
+
+  // Owner takes precedence: if a doc is somehow owned AND has a self-row in
+  // document_permissions (data inconsistency), we treat it as owned, no badge.
+  const docs: DocumentWithMeta[] = ((documents as Document[] | null) ?? []).map(
+    (d) => {
+      const isOwner = d.owner_id === userData.user.id;
+      return {
+        ...d,
+        isOwner,
+        role: isOwner ? null : (roleByDocId.get(d.id) ?? null),
+      };
+    },
+  );
+
+  const owned = docs.filter((d) => d.isOwner);
+  const shared = docs.filter((d) => !d.isOwner);
 
   return (
     <main className="min-h-screen bg-background">
@@ -44,7 +85,8 @@ export default async function DashboardPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Your documents</h1>
             <p className="text-muted-foreground mt-1 text-sm">
-              {documents?.length ?? 0} document{documents?.length === 1 ? "" : "s"}
+              {owned.length} document{owned.length === 1 ? "" : "s"}
+              {shared.length > 0 && <> · {shared.length} shared</>}
             </p>
           </div>
           <NewDocumentButton />
@@ -56,10 +98,20 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        {documents && documents.length === 0 ? (
+        {docs.length === 0 ? (
           <EmptyState />
+        ) : shared.length === 0 ? (
+          <DocumentList documents={owned} />
         ) : (
-          <DocumentList documents={documents as Document[] | null ?? []} />
+          <div className="flex flex-col gap-10">
+            {owned.length > 0 && <DocumentList documents={owned} />}
+            <div>
+              <h2 className="text-lg font-semibold tracking-tight mb-3">
+                Shared with you
+              </h2>
+              <DocumentList documents={shared} />
+            </div>
+          </div>
         )}
       </section>
     </main>
@@ -89,7 +141,7 @@ export default async function DashboardPage() {
 //   );
 // }
 
-function DocumentList({ documents }: { documents: Document[] }) {
+function DocumentList({ documents }: { documents: DocumentWithMeta[] }) {
   return (
     <ul className="flex flex-col gap-2">
       {documents.map((doc) => (
@@ -99,7 +151,10 @@ function DocumentList({ documents }: { documents: Document[] }) {
             className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors"
           >
             <div className="min-w-0 flex-1 pr-12">
-              <p className="font-medium truncate">{doc.title}</p>
+              <div className="flex items-center gap-2">
+                <p className="font-medium truncate">{doc.title}</p>
+                {doc.role && <RoleBadge role={doc.role} />}
+              </div>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Updated {formatDistanceToNow(new Date(doc.updated_at), { addSuffix: true })}
               </p>
@@ -111,6 +166,14 @@ function DocumentList({ documents }: { documents: Document[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+function RoleBadge({ role }: { role: Role }) {
+  return (
+    <span className="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded bg-muted text-muted-foreground shrink-0">
+      {role}
+    </span>
   );
 }
 
