@@ -58,6 +58,15 @@ export default function CollabEditor({
     });
 
     wsProvider.awareness.setLocalStateField("user", localUser);
+    // CollaborationCaret rewrites the "user" field on init, dropping our id.
+    // Mirror identity into our own "userMeta" field — CollaborationCaret never
+    // touches it — so the avatars list can dedupe by stable user id across
+    // refresh races (two transient clientIDs for the same user).
+    wsProvider.awareness.setLocalStateField("userMeta", {
+      id: localUser.id,
+      name: localUser.name,
+      color: localUser.color,
+    });
 
     setProvider(wsProvider);
 

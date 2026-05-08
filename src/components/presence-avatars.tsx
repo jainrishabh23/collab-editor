@@ -5,15 +5,24 @@ import { useEffect, useState } from "react";
 import { WebsocketProvider } from "y-websocket";
 
 type AwarenessUser = {
-  // Optional: CollaborationCaret overwrites the awareness `user` field with its
-  // own { name, color } payload on init, dropping any id we set earlier.
+  // CollaborationCaret overwrites the awareness `user` field with its own
+  // { name, color } payload on init, dropping any id we set earlier.
   id?: string;
+  name: string;
+  color: string;
+};
+
+// Our own field, written alongside `user`. CollaborationCaret doesn't touch it,
+// so the id survives and we can dedupe stably across refresh races.
+type AwarenessUserMeta = {
+  id: string;
   name: string;
   color: string;
 };
 
 type AwarenessState = {
   user?: AwarenessUser;
+  userMeta?: AwarenessUserMeta;
 };
 
 type DisplayUser = {
@@ -42,23 +51,29 @@ export default function PresenceAvatars({ provider, localUserId }: Props) {
         AwarenessState,
       ][];
 
-      // Dedupe by user.id when present, else by clientID. Each Yjs peer has
-      // a unique clientID, so falling back to it shows one avatar per tab when
-      // the id has been stripped by another awareness writer.
+      // Dedupe by userMeta.id when present, else by clientID. Two simultaneous
+      // connections from the same user (refresh race: old socket lingering in
+      // awareness while new one connects) collapse to one avatar because both
+      // carry the same userMeta.id even though their Yjs clientIDs differ.
+      // userMeta is read first for display fields; we fall back to `user`
+      // (CollaborationCaret's stripped { name, color }) only if userMeta is
+      // missing — e.g. a peer running an older client without userMeta.
       const map = new Map<string, DisplayUser>();
       for (const [clientID, state] of entries) {
-        if (!state.user) continue;
-        const id =
-          typeof state.user.id === "string" ? state.user.id : null;
-        const key = id ?? `client-${clientID}`;
+        const meta = state.userMeta;
+        const fallback = state.user;
+        if (!meta && !fallback) continue;
+
+        const key = meta?.id ?? `client-${clientID}`;
         if (map.has(key)) continue;
+
         map.set(key, {
           key,
-          name: state.user.name,
-          color: state.user.color,
+          name: meta?.name ?? fallback?.name ?? "?",
+          color: meta?.color ?? fallback?.color ?? "#888",
           isYou:
-            clientID === localClientID ||
-            (id !== null && id === localUserId),
+            (meta?.id !== undefined && meta.id === localUserId) ||
+            clientID === localClientID,
         });
       }
 
